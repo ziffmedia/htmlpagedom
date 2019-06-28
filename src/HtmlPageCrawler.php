@@ -22,17 +22,22 @@ class HtmlPageCrawler extends Crawler
     /**
      * Get an HtmlPageCrawler object from a HTML string, DOMNode, DOMNodeList or HtmlPageCrawler
      *
-     * This is the equivalent to jQuery's $() function when used for wrapping DOMNodes or creating DOMElements from HTML code.
+     * Attention: Changed behavior since 2.0:
+     *  - If no content is passed, an empty HTML skeleton document will be created.
+     *  - It is no longer possible to create Crawler objects on an HTML fragment this way. Use createFragment() instead.
      *
-     * @param string|HtmlPageCrawler|\DOMNode|\DOMNodeList|array $content
+     * @param string|HtmlPageCrawler|\DOMNode|\DOMNodeList|array|null $content
      * @return HtmlPageCrawler
      * @api
      */
-    public static function create($content)
+    public static function create($content = null)
     {
         if ($content instanceof HtmlPageCrawler) {
             return $content;
         } else {
+            if ($content === null) {
+                $content = '<html><body></body></html>';
+            }
             return new HtmlPageCrawler($content);
         }
     }
@@ -75,7 +80,7 @@ class HtmlPageCrawler extends Crawler
      */
     public function after($content)
     {
-        $content = self::create($content);
+        $content = self::createFragmentCrawler($content);
         $newnodes = array();
         foreach ($this as $i => $node) {
             /** @var \DOMNode $node */
@@ -105,7 +110,7 @@ class HtmlPageCrawler extends Crawler
      */
     public function append($content)
     {
-        $content = self::create($content);
+        $content = self::createFragmentCrawler($content);
         $newnodes = array();
         foreach ($this as $i => $node) {
             /** @var \DOMNode $node */
@@ -130,7 +135,7 @@ class HtmlPageCrawler extends Crawler
      */
     public function appendTo($element)
     {
-        $e = self::create($element);
+        $e = self::createFragmentCrawler($element);
         $newnodes = array();
         foreach ($e as $i => $node) {
             /** @var \DOMNode $node */
@@ -143,7 +148,7 @@ class HtmlPageCrawler extends Crawler
                 $newnodes[] = $newnode;
             }
         }
-        return self::create($newnodes);
+        return self::createFragmentCrawler($newnodes);
     }
 
     /**
@@ -210,7 +215,7 @@ class HtmlPageCrawler extends Crawler
      */
     public function before($content)
     {
-        $content = self::create($content);
+        $content = self::createFragmentCrawler($content);
         $newnodes = array();
         foreach ($this as $i => $node) {
             /** @var \DOMNode $node */
@@ -353,7 +358,7 @@ class HtmlPageCrawler extends Crawler
      */
     public function setInnerHtml($content)
     {
-        $content = self::create($content);
+        $content = self::createFragmentCrawler($content);
         foreach ($this as $node) {
             $node->nodeValue = '';
             foreach ($content as $newnode) {
@@ -375,7 +380,7 @@ class HtmlPageCrawler extends Crawler
      */
     public function insertAfter($element)
     {
-        $e = self::create($element);
+        $e = self::createFragmentCrawler($element);
         $newnodes = array();
         foreach ($e as $i => $node) {
             /** @var \DOMNode $node */
@@ -391,7 +396,7 @@ class HtmlPageCrawler extends Crawler
                 $newnodes[] = $newnode;
             }
         }
-        return self::create($newnodes);
+        return self::createFragmentCrawler($newnodes);
     }
 
     /**
@@ -403,7 +408,7 @@ class HtmlPageCrawler extends Crawler
      */
     public function insertBefore($element)
     {
-        $e = self::create($element);
+        $e = self::createFragmentCrawler($element);
         $newnodes = array();
         foreach ($e as $i => $node) {
             /** @var \DOMNode $node */
@@ -416,7 +421,7 @@ class HtmlPageCrawler extends Crawler
                 $newnodes[] = $newnode;
             }
         }
-        return self::create($newnodes);
+        return self::createFragmentCrawler($newnodes);
     }
 
     /**
@@ -428,7 +433,7 @@ class HtmlPageCrawler extends Crawler
      */
     public function prepend($content)
     {
-        $content = self::create($content);
+        $content = self::createFragmentCrawler($content);
         $newnodes = array();
         foreach ($this as $i => $node) {
             $refnode = $node->firstChild;
@@ -458,7 +463,7 @@ class HtmlPageCrawler extends Crawler
      */
     public function prependTo($element)
     {
-        $e = self::create($element);
+        $e = self::createFragmentCrawler($element);
         $newnodes = array();
         foreach ($e as $i => $node) {
             $refnode = $node->firstChild;
@@ -476,7 +481,7 @@ class HtmlPageCrawler extends Crawler
                 $newnodes[] = $newnode;
             }
         }
-        return self::create($newnodes);
+        return self::createFragmentCrawler($newnodes);
     }
 
     /**
@@ -567,7 +572,7 @@ class HtmlPageCrawler extends Crawler
      */
     public function replaceAll($element)
     {
-        $e = self::create($element);
+        $e = self::createFragmentCrawler($element);
         $newnodes = array();
         foreach ($e as $i => $node) {
             /** @var \DOMNode $node */
@@ -584,7 +589,7 @@ class HtmlPageCrawler extends Crawler
                 $newnodes[] = $newnode;
             }
         }
-        return self::create($newnodes);
+        return self::createFragmentCrawler($newnodes);
     }
 
     /**
@@ -596,7 +601,7 @@ class HtmlPageCrawler extends Crawler
      */
     public function replaceWith($content)
     {
-        $content = self::create($content);
+        $content = self::createFragmentCrawler($content);
         $newnodes = array();
         foreach ($this as $i => $node) {
             /** @var \DOMNode $node */
@@ -664,7 +669,7 @@ class HtmlPageCrawler extends Crawler
     {
         $classes = explode(' ', $classname);
         foreach ($this as $i => $node) {
-            $c = self::create($node);
+            $c = self::createFragmentCrawler($node);
             /** @var \DOMNode $node */
             foreach ($classes as $class) {
                 if ($c->hasClass($class)) {
@@ -690,7 +695,7 @@ class HtmlPageCrawler extends Crawler
             $parents[] = $node->parentNode;
         }
 
-        self::create($parents)->unwrapInner();
+        self::createFragmentCrawler($parents)->unwrapInner();
         return $this;
     }
 
@@ -731,7 +736,7 @@ class HtmlPageCrawler extends Crawler
      */
     public function wrap($wrappingElement)
     {
-        $content = self::create($wrappingElement);
+        $content = self::createFragmentCrawler($wrappingElement);
         $newnodes = array();
         foreach ($this as $i => $node) {
             /** @var \DOMNode $node */
@@ -777,7 +782,7 @@ class HtmlPageCrawler extends Crawler
      */
     public function wrapAll($content)
     {
-        $content = self::create($content);
+        $content = self::createFragmentCrawler($content);
         $parent = $this->getNode(0)->parentNode;
         foreach ($this as $i => $node) {
             /** @var \DOMNode $node */
@@ -825,7 +830,7 @@ class HtmlPageCrawler extends Crawler
     {
         foreach ($this as $i => $node) {
             /** @var \DOMNode $node */
-            self::create($node->childNodes)->wrapAll($content);
+            self::createFragmentCrawler($node->childNodes)->wrapAll($content);
         }
         return $this;
     }
@@ -935,76 +940,82 @@ class HtmlPageCrawler extends Crawler
     public function addContent($content, $type = null)
     {
         if (empty($type)) {
-            $type = 'text/html;charset=UTF-8';
+            $type = 0 === strpos($content, '<?xml') ? 'application/xml' : 'text/html';
+        }
+
+        // DOM only for HTML/XML content
+        if (!preg_match('/(x|ht)ml/i', $type, $xmlMatches)) {
+            return;
         }
         if (substr($type, 0, 9) == 'text/html' && !preg_match('/<html\b[^>]*>/i', $content)) {
             // string contains no <html> Tag => no complete document but an HTML fragment!
-            $this->addHtmlFragment($content);
+            throw new \InvalidArgumentException('It is not possible to create a HtmlPageCrawler instance on a HTML fragment. Use createFragment() instead.');
         } else {
             parent::addContent($content, $type);
         }
     }
 
-    public function addHtmlFragment($content, $charset = 'UTF-8')
+//    public function addHtmlFragment($content, $charset = 'UTF-8')
+//    {
+//        $d = new \DOMDocument('1.0', $charset);
+//        $d->preserveWhiteSpace = false;
+//        $root = $d->appendChild($d->createElement(self::FRAGMENT_ROOT_TAGNAME));
+//        $bodynode = Helpers::getBodyNodeFromHtmlFragment($content, $charset);
+//        foreach ($bodynode->childNodes as $child) {
+//            $inode = $root->appendChild($d->importNode($child, true));
+//            if ($inode) {
+//                $this->addNode($inode);
+//            }
+//        }
+//    }
+
+    /**
+     * @param string $content
+     * @param string $charset
+     * @return HtmlPageCrawler
+     * @throws \Exception
+     */
+    public function createFragment($content, $charset = 'UTF-8')
     {
-        $d = new \DOMDocument('1.0', $charset);
-        $d->preserveWhiteSpace = false;
-        $root = $d->appendChild($d->createElement(self::FRAGMENT_ROOT_TAGNAME));
+        $d = $this->getDOMDocument();
+        if (!$d) {
+            throw new \Exception('It is not possible to create a HTML fragement on an empty HtmlPageCrawler instance. Add a complete HTML document first.');
+        }
+        $crawler = new static();
         $bodynode = Helpers::getBodyNodeFromHtmlFragment($content, $charset);
         foreach ($bodynode->childNodes as $child) {
-            $inode = $root->appendChild($d->importNode($child, true));
+            $inode = $d->importNode($child, true);
             if ($inode) {
-                $this->addNode($inode);
+                $crawler->addNode($inode);
             }
         }
+        return $crawler;
     }
 
-//    /**
-//     * returns the first node
-//     * deprecated, use getNode(0) instead
-//     *
-//     * @return \DOMNode|null
-//     * @deprecated
-//     * @see Crawler::getNode
-//     */
-//    public function getFirstNode()
-//    {
-//        return $this->getNode(0);
-//    }
-
-//    /**
-//     * @param int $position
-//     *
-//     * overridden from Crawler because it is not public in Symfony 2.3
-//     * TODO: throw away as soon as we don't need to support SF 2.3 any more
-//     *
-//     * @return \DOMElement|null
-//     */
-//    public function getNode($position)
-//    {
-//        return parent::getNode($position);
-//    }
-//
-//    /**
-//     * Returns the node name of the first node of the list.
-//     *
-//     * in Crawler (parent), this function will be available starting with 2.6.0,
-//     * therefore this method be removed from here as soon as we don't need to keep compatibility
-//     * with Symfony < 2.6
-//     *
-//     * TODO: throw away as soon as we don't need to support SF 2.3 any more
-//     *
-//     * @return string The node name
-//     *
-//     * @throws \InvalidArgumentException When current node is empty
-//     */
-//    public function nodeName()
-//    {
-//        if (!count($this)) {
-//            throw new \InvalidArgumentException('The current node list is empty.');
-//        }
-//        return $this->getNode(0)->nodeName;
-//    }
+    protected function createFragmentCrawler($content)
+    {
+        if ($content instanceof HtmlPageCrawler) {
+            /** @var HtmlPageCrawler $content */
+            if ($content->getDOMDocument() !== $this->getDOMDocument()) {
+                throw new \InvalidArgumentException('It is not possible to add nodes from another document.');
+            }
+            return $content;
+        } elseif (is_string($content)) {
+            return $this->createFragment($content);
+        } elseif ($content instanceof \DOMNode) {
+            /** @var \DOMNode $content */
+            if ($content->ownerDocument !== $this->getDOMDocument()) {
+                throw new \InvalidArgumentException('It is not possible to add nodes from another document.');
+            }
+            return new self($content);
+        } elseif ($content instanceof \DOMNodeList) {
+            /** @var \DOMNodeList $content */
+            if ($content->item(0)->ownerDocument !== $this->getDOMDocument()) {
+                throw new \InvalidArgumentException('It is not possible to add nodes from another document.');
+            }
+            return new self($content);
+        }
+    }
 
     /**
      * Adds a node to the current list of nodes.

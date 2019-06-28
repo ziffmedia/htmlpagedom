@@ -94,23 +94,25 @@ class HtmlPageCrawlerTest extends TestCase
      */
     public function testAppend()
     {
+        $dc = HtmlPageCrawler::create();
+
         // Testing append string to several elements
-        $c = new HtmlPageCrawler('<p>Paragraph 1</p><p>Paragraph 2</p><p>Paragraph 3</p>');
+        $c = $dc->createFragment('<p>Paragraph 1</p><p>Paragraph 2</p><p>Paragraph 3</p>');
         $c->filter('p')->append('<br>Appended Text');
         $this->assertEquals('<p>Paragraph 1<br>Appended Text</p><p>Paragraph 2<br>Appended Text</p><p>Paragraph 3<br>Appended Text</p>', $c->saveHTML());
 
         // Testing append HtmlPageCrawler to several elements
-        $c = new HtmlPageCrawler('<p>Paragraph 1</p><p>Paragraph 2</p><p>Paragraph 3</p>');
-        $c->filter('p')->append(new HtmlPageCrawler('<br>Appended Text'));
+        $c = $dc->createFragment('<p>Paragraph 1</p><p>Paragraph 2</p><p>Paragraph 3</p>');
+        $c->filter('p')->append($dc->createFragment('<br>Appended Text'));
         $this->assertEquals('<p>Paragraph 1<br>Appended Text</p><p>Paragraph 2<br>Appended Text</p><p>Paragraph 3<br>Appended Text</p>', $c->saveHTML());
 
         // Testing append DOMNode to several elements
-        $c = new HtmlPageCrawler('<p>Paragraph 1</p><p>Paragraph 2</p><p>Paragraph 3</p>');
+        $c = $dc->createFragment('<p>Paragraph 1</p><p>Paragraph 2</p><p>Paragraph 3</p>');
         $app = $c->getDOMDocument()->createElement('span', 'Appended Text');
         $c->filter('p')->append($app);
         $this->assertEquals('<p>Paragraph 1<span>Appended Text</span></p><p>Paragraph 2<span>Appended Text</span></p><p>Paragraph 3<span>Appended Text</span></p>', $c->saveHTML());
 
-        $c = new HtmlPageCrawler('<div id="content"><span>Append Self</span></div>');
+        $c = $dc->createFragment('<div id="content"><span>Append Self</span></div>');
         $c->filter('#content')->append($c->filter('span'));
         $this->assertEquals('<div id="content"><span>Append Self</span></div>', $c->saveHTML());
     }
@@ -120,11 +122,13 @@ class HtmlPageCrawlerTest extends TestCase
      */
     public function testAppendTo()
     {
-        $c = new HtmlPageCrawler('<div id="content"><h1>Title</h1><em>Big</em></div>');
+        $dc = HtmlPageCrawler::create();
+
+        $c = $dc->createFragment('<div id="content"><h1>Title</h1><em>Big</em></div>');
         $c->filter('em')->appendTo($c->filter('h1'));
         $this->assertEquals('<div id="content"><h1>Title<em>Big</em></h1></div>', $c->saveHTML());
 
-        $c = new HtmlPageCrawler('<div id="content"><h1>Self Title</h1></div>');
+        $c = $dc->createFragment('<div id="content"><h1>Self Title</h1></div>');
         $c->filter('h1')->appendTo($c->filter('h1'));
         $this->assertEquals('<div id="content"><h1>Self Title</h1></div>', $c->saveHTML());
     }
@@ -143,11 +147,11 @@ class HtmlPageCrawlerTest extends TestCase
         $t = $c->filter('body');
         $this->assertFalse($t->isHtmlDocument());
 
-        $c = new HtmlPageCrawler('<div id="content"><h1>Title</h1></div>');
-        $this->assertFalse($c->isHtmlDocument());
+        $c1 = $c->createFragment('<div id="content"><h1>Title</h1></div>');
+        $this->assertFalse($c1->isHtmlDocument());
 
-        $c = new HtmlPageCrawler('<html><body><div id="content"><h1>Title</h1></div></body></html>');
-        $this->assertTrue($c->isHtmlDocument());
+        $c2 = HtmlPageCrawler::create('<html><body><div id="content"><h1>Title</h1></div></body></html>');
+        $this->assertTrue($c2->isHtmlDocument());
     }
 
     /**
@@ -165,8 +169,8 @@ class HtmlPageCrawlerTest extends TestCase
         $t = $c->filter('h1');
         $this->assertEquals('<h1>Title</h1>', $t->saveHTML());
 
-        $c = new HtmlPageCrawler('<div id="content"><h1>Title</h1></div>');
-        $this->assertEquals('<div id="content"><h1>Title</h1></div>', $c->saveHTML());
+        $c1 = $c->createFragment('<div id="content"><h1>Title</h1></div>');
+        $this->assertEquals('<div id="content"><h1>Title</h1></div>', $c1->saveHTML());
     }
 
     /**
@@ -220,7 +224,7 @@ class HtmlPageCrawlerTest extends TestCase
         $this->assertTrue($t->hasClass('class1'));
         $this->assertTrue($t->hasClass('class2'));
 
-        $c1 = new HtmlPageCrawler('<p class="a"></p><p class="b"></p><p class="c"></p>');
+        $c1 = $c->createFragment('<p class="a"></p><p class="b"></p><p class="c"></p>');
         $this->assertTrue($c1->hasClass('b'));
     }
 
@@ -237,14 +241,14 @@ class HtmlPageCrawlerTest extends TestCase
             $this->_ignoreNewlines($c->saveHTML())
         );
 
-        $c = new HtmlPageCrawler();
-        $c->addContent('<div id="content"><h1>Title');
-        $this->assertEquals('<div id="content"><h1>Title</h1></div>', $c->saveHTML());
-
-        $c = new HtmlPageCrawler();
-        $c->addContent('<p>asdf<p>asdfaf</p>');
-        $this->assertEquals(2, count($c));
-        $this->assertEquals('<p>asdf</p><p>asdfaf</p>', $c->saveHTML());
+//        $c = new HtmlPageCrawler();
+//        $c->addContent('<div id="content"><h1>Title');
+//        $this->assertEquals('<div id="content"><h1>Title</h1></div>', $c->saveHTML());
+//
+//        $c = new HtmlPageCrawler();
+//        $c->addContent('<p>asdf<p>asdfaf</p>');
+//        $this->assertEquals(2, count($c));
+//        $this->assertEquals('<p>asdf</p><p>asdfaf</p>', $c->saveHTML());
     }
 
     /**
@@ -252,15 +256,17 @@ class HtmlPageCrawlerTest extends TestCase
      */
     public function testBefore()
     {
-        $c = new HtmlPageCrawler('<div id="content"><h1>Title</h1></div>');
+        $dc = HtmlPageCrawler::create();
+
+        $c = $dc->createFragment('<div id="content"><h1>Title</h1></div>');
         $c->filter('h1')->before('<p>Text before h1</p>');
         $this->assertEquals('<div id="content"><p>Text before h1</p><h1>Title</h1></div>', $c->saveHTML());
 
-        $c = new HtmlPageCrawler('<div id="content"><h1>Title</h1></div>');
+        $c = $dc->createFragment('<div id="content"><h1>Title</h1></div>');
         $c->filter('h1')->before(new HtmlPageCrawler('<p>Text before h1</p><p>and more text before</p>'));
         $this->assertEquals('<div id="content"><p>Text before h1</p><p>and more text before</p><h1>Title</h1></div>', $c->saveHTML());
 
-        $c = new HtmlPageCrawler('<div id="content"><h1>Self Before</h1></div>');
+        $c = $dc->createFragment('<div id="content"><h1>Self Before</h1></div>');
         $c->filter('h1')->before($c->filter('h1'));
         $this->assertEquals('<div id="content"><h1>Self Before</h1></div>', $c->saveHTML());
     }
@@ -270,11 +276,13 @@ class HtmlPageCrawlerTest extends TestCase
      */
     public function testInsertBefore()
     {
-        $c = new HtmlPageCrawler('<div id="content"><h1>Title</h1><p>Text before h1</p></div>');
+        $dc = HtmlPageCrawler::create();
+
+        $c = $dc->createFragment('<div id="content"><h1>Title</h1><p>Text before h1</p></div>');
         $c->filter('p')->insertBefore($c->filter('h1'));
         $this->assertEquals('<div id="content"><p>Text before h1</p><h1>Title</h1></div>', $c->saveHTML());
 
-        $c = new HtmlPageCrawler('<div id="content"><h1>Self Insert Before Title</h1><p>Text after h1</p></div>');
+        $c = $dc->createFragment('<div id="content"><h1>Self Insert Before Title</h1><p>Text after h1</p></div>');
         $c->filter('h1')->insertBefore($c->filter('h1'));
         $this->assertEquals('<div id="content"><h1>Self Insert Before Title</h1><p>Text after h1</p></div>', $c->saveHTML());
     }
@@ -284,15 +292,17 @@ class HtmlPageCrawlerTest extends TestCase
      */
     public function testAfter()
     {
-        $c = new HtmlPageCrawler('<div id="content"><h1>Title</h1></div>');
+        $dc = HtmlPageCrawler::create();
+
+        $c = $dc->createFragment('<div id="content"><h1>Title</h1></div>');
         $c->filter('h1')->after('<p>Text after h1</p>');
         $this->assertEquals('<div id="content"><h1>Title</h1><p>Text after h1</p></div>', $c->saveHTML());
 
-        $c = new HtmlPageCrawler('<div id="content"><h1>Title</h1><h1>Title2</h1></div>');
+        $c = $dc->createFragment('<div id="content"><h1>Title</h1><h1>Title2</h1></div>');
         $c->filter('h1')->after(new HtmlPageCrawler('<p>Text after h1</p><p>and more text after</p>'));
         $this->assertEquals('<div id="content"><h1>Title</h1><p>Text after h1</p><p>and more text after</p><h1>Title2</h1><p>Text after h1</p><p>and more text after</p></div>', $c->saveHTML());
 
-        $c = new HtmlPageCrawler('<div id="content"><h1>Self After</h1></div>');
+        $c = $dc->createFragment('<div id="content"><h1>Self After</h1></div>');
         $c->filter('h1')->after($c->filter('h1'));
         $this->assertEquals('<div id="content"><h1>Self After</h1></div>', $c->saveHTML());
     }
@@ -302,11 +312,13 @@ class HtmlPageCrawlerTest extends TestCase
      */
     public function testInsertAfter()
     {
-        $c = new HtmlPageCrawler('<div id="content"><p>Text after h1</p><h1>Title</h1></div>');
+        $dc = HtmlPageCrawler::create();
+
+        $c = $dc->createFragment('<div id="content"><p>Text after h1</p><h1>Title</h1></div>');
         $c->filter('p')->insertAfter($c->filter('h1'));
         $this->assertEquals('<div id="content"><h1>Title</h1><p>Text after h1</p></div>', $c->saveHTML());
 
-        $c = new HtmlPageCrawler('<div id="content"><p>Text before h1</p><h1>Self Insert After Title</h1></div>');
+        $c = $dc->createFragment('<div id="content"><p>Text before h1</p><h1>Self Insert After Title</h1></div>');
         $c->filter('h1')->insertAfter($c->filter('h1'));
         $this->assertEquals('<div id="content"><p>Text before h1</p><h1>Self Insert After Title</h1></div>', $c->saveHTML());
     }
@@ -316,15 +328,17 @@ class HtmlPageCrawlerTest extends TestCase
      */
     public function testPrepend()
     {
-        $c = new HtmlPageCrawler('<div id="content"><h1>Title</h1></div>');
+        $dc = HtmlPageCrawler::create();
+
+        $c = $dc->createFragment('<div id="content"><h1>Title</h1></div>');
         $c->filter('#content')->prepend('<p>Text before h1</p>');
         $this->assertEquals('<div id="content"><p>Text before h1</p><h1>Title</h1></div>', $c->saveHTML());
 
-        $c = new HtmlPageCrawler('<div id="content"></div>');
+        $c = $dc->createFragment('<div id="content"></div>');
         $c->filter('#content')->prepend(new HtmlPageCrawler('<p>Text before h1</p><p>and more text before</p>'));
         $this->assertEquals('<div id="content"><p>Text before h1</p><p>and more text before</p></div>', $c->saveHTML());
 
-        $c = new HtmlPageCrawler('<div id="content"><span>Prepend Self</span></div>');
+        $c = $dc->createFragment('<div id="content"><span>Prepend Self</span></div>');
         $c->filter('#content')->prepend($c->filter('span'));
         $this->assertEquals('<div id="content"><span>Prepend Self</span></div>', $c->saveHTML());
     }
@@ -334,19 +348,21 @@ class HtmlPageCrawlerTest extends TestCase
      */
     public function testPrependTo()
     {
-        $c = new HtmlPageCrawler('<div id="content"><p>Text before</p></div>');
+        $dc = HtmlPageCrawler::create();
+
+        $c = $dc->createFragment('<div id="content"><p>Text before</p></div>');
         $c->filter('p')->prependTo('Text');
         $this->assertEquals('<div id="content"><p>Text before</p></div>', $c->saveHTML());
 
-        $c = new HtmlPageCrawler('<div id="content"><h1>Title</h1></div>');
+        $c = $dc->createFragment('<div id="content"><h1>Title</h1></div>');
         $c->filter('#content')->prependTo(new HtmlPageCrawler('<p>paragraph</p>'));
         $this->assertEquals('<div id="content"><h1>Title</h1></div>', $c->saveHTML());
 
-        $c = new HtmlPageCrawler('<div id="content"><h1>Title</h1><em>Big</em></div>');
+        $c = $dc->createFragment('<div id="content"><h1>Title</h1><em>Big</em></div>');
         $c->filter('em')->prependTo($c->filter('h1'));
         $this->assertEquals('<div id="content"><h1><em>Big</em>Title</h1></div>', $c->saveHTML());
 
-        $c = new HtmlPageCrawler('<div id="content"><h1>Self Title</h1></div>');
+        $c = $dc->createFragment('<div id="content"><h1>Self Title</h1></div>');
         $c->filter('h1')->prependTo($c->filter('h1'));
         $this->assertEquals('<div id="content"><h1>Self Title</h1></div>', $c->saveHTML());
     }
@@ -356,24 +372,26 @@ class HtmlPageCrawlerTest extends TestCase
      */
     public function testWrap()
     {
-        $c = new HtmlPageCrawler('<div id="content"><h1>Title</h1></div>');
+        $dc = HtmlPageCrawler::create();
+
+        $c = $dc->createFragment('<div id="content"><h1>Title</h1></div>');
         $c->filter('h1')->wrap('<div class="innercontent">');
         $this->assertEquals('<div id="content"><div class="innercontent"><h1>Title</h1></div></div>', $c->saveHTML());
 
-        $c = new HtmlPageCrawler('<div id="content"><h1>Title</h1></div>');
+        $c = $dc->createFragment('<div id="content"><h1>Title</h1></div>');
         $c->filter('h1')->wrap('<div class="ic">asdf<div class="a1"><div class="a2"></div></div></div></div>');
         $this->assertEquals('<div id="content"><div class="ic">asdf<div class="a1"><div class="a2"><h1>Title</h1></div></div></div></div>', $c->saveHTML());
 
-        $c = new HtmlPageCrawler('<div id="content"><h1>Title</h1></div>');
+        $c = $dc->createFragment('<div id="content"><h1>Title</h1></div>');
         $c->filter('h1')->wrap('<div class="ic">asdf</div><div>jkl</div>'); // wrap has more than 1 root element
         $this->assertEquals('<div id="content"><div class="ic">asdf<h1>Title</h1></div></div>', $c->saveHTML()); // only first element is used
 
         // Test for wrapping multiple nodes
-        $c = new HtmlPageCrawler('<div id="content"><p>p1</p><p>p2</p></div>');
+        $c = $dc->createFragment('<div id="content"><p>p1</p><p>p2</p></div>');
         $c->filter('p')->wrap('<div class="p"></div>');
         $this->assertEquals('<div id="content"><div class="p"><p>p1</p></div><div class="p"><p>p2</p></div></div>', $c->saveHTML());
 
-        $c = new HtmlPageCrawler('plain text node');
+        $c = $dc->createFragment('plain text node');
         $c->wrap('<div class="ic"></div>');
         $this->assertEquals('<div class="ic">plain text node</div>', $c->parents()->eq(0)->saveHTML());
 
