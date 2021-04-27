@@ -7,7 +7,7 @@ use PHPUnit\Framework\TestCase;
 
 class HtmlPageTest extends TestCase
 {
-    public function setUp()
+    public function setUp(): void
     {
         $this->root = vfsStream::setup('root');
     }
@@ -90,11 +90,17 @@ END;
 
         $expected =<<<END
 <!DOCTYPE html>
-<html><head><title></title><script>
+<html>
+<head>
+<title></title>
+<script>
 // this will be awesome
 alert('Hello world');
-</script></head><body>
-<h1>Script Test</h1></body></html>
+</script>
+</head>
+<body>
+<h1>Script Test</h1></body>
+</html>
 
 END;
         $this->assertEquals($expected, $newhtml);
@@ -174,7 +180,7 @@ alert('Hello world');
 	</head>
 	<body>
 		<h1>TEST</h1>
-		<p class="">asdf jksdlf ajsfk <b>jasdf jaksfd asdf</b> <a>jasdf jaks</a></p>
+		<p class>asdf jksdlf ajsfk <b>jasdf jaksfd asdf</b> <a>jasdf jaks</a></p>
 	</body>
 </html>
 
